@@ -1,9 +1,9 @@
 ## Load Game Screen
 ##-----------------
 
-import opengl
 import tables
 
+import opengl
 import glfw #GLFW_*
 import ftgl #createBitmapFont
 

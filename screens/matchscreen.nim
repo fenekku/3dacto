@@ -1,12 +1,12 @@
 # Match Screen
 # ------------------------------------------------------------------
 
-import opengl
 import tables
 import unsigned #unsigned comparisons
 import strutils
+import os
 
-
+import opengl
 import glfw
 import ftgl
 import soil   #SOIL_load_OGL_texture
@@ -229,12 +229,13 @@ proc newMatchScreenType*(cam : PCamera): PMatchScreen =
   result.keyMap[(GLFW_KEY_D, GLFW_REPEAT)] = rotateRightCallback
 
   ## load an image file directly as a new OpenGL texture
-  O_texture = soil.SOIL_load_OGL_texture("/home/guillaume/dev/nimrod-dev/3dacto/assets/circle-white-on-black.png",
-                                      SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
-                                      SOIL_FLAG_MIPMAPS or SOIL_FLAG_INVERT_Y or SOIL_FLAG_NTSC_SAFE_RGB or SOIL_FLAG_COMPRESS_TO_DXT)
-  X_texture = soil.SOIL_load_OGL_texture("/home/guillaume/dev/nimrod-dev/3dacto/assets/x-white-on-black.png",
-                                      SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
-                                      SOIL_FLAG_MIPMAPS or SOIL_FLAG_INVERT_Y or SOIL_FLAG_NTSC_SAFE_RGB or SOIL_FLAG_COMPRESS_TO_DXT)
+  var asset_path = joinPath(getCurrentDir(), "assets")
+  O_texture = soil.SOIL_load_OGL_texture(joinPath(asset_path, "circle-white-on-black.png"),
+                                         SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
+                                         SOIL_FLAG_MIPMAPS or SOIL_FLAG_INVERT_Y or SOIL_FLAG_NTSC_SAFE_RGB or SOIL_FLAG_COMPRESS_TO_DXT)
+  X_texture = soil.SOIL_load_OGL_texture(joinPath(asset_path, "x-white-on-black.png"),
+                                         SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
+                                         SOIL_FLAG_MIPMAPS or SOIL_FLAG_INVERT_Y or SOIL_FLAG_NTSC_SAFE_RGB or SOIL_FLAG_COMPRESS_TO_DXT)
 
   ## check for an error during the load process
   if( (0'u32 == O_texture) or (0'u32 == X_texture) ):

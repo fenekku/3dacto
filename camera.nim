@@ -1,7 +1,9 @@
 # Camera class
 
-import opengl
 import strutils
+
+import opengl
+import glu
 
 import abacus
 

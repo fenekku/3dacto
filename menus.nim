@@ -1,5 +1,5 @@
-import opengl
 
+import opengl
 import ftgl
 
 import colors

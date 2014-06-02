@@ -1,9 +1,9 @@
-import opengl   #all opengl stuff
 import strutils
 import os
 import tables
 import unsigned #uint comparison
 
+import opengl   #all opengl stuff
 import glfw
 import ftgl
 import soil
@@ -32,8 +32,8 @@ var
   c : ptr cint
   image : pointer
 
-  windowW : cint = 1024
-  windowH : cint = 768
+  windowW : cint = 800 #1024
+  windowH : cint = 600 #768
   window : PGlfwWindow
   camcorder : PCamera
   screen : PScreen
@@ -71,6 +71,8 @@ proc key_callback(window : PGlfwWindow, key : cint, scancode : cint,
 ## -------------------------------------------------------------------------------
 
 proc initialize() =
+
+  enableAutoGlErrorCheck(false)
 
   glfwSetErrorCallback(error_callback)
 

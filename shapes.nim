@@ -1,7 +1,8 @@
 ## Squares and cubes
 
-import opengl
 import unsigned #unsigned comparisons
+
+import opengl
 
 from colors import BLACK, WHITE
 

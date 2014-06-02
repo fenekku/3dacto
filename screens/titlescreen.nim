@@ -1,9 +1,9 @@
 ## Title Screen
 ## ------------------------------------------------------------------
 
-import opengl
 import tables
 
+import opengl
 import glfw
 import ftgl
 
