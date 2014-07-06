@@ -4,10 +4,10 @@ import tables
 import unsigned #uint comparison
 
 import opengl   #all opengl stuff
-import glfw
 import ftgl
 import soil
 
+import glfw3 as glfw
 import camera
 import colors
 import basescreen
@@ -32,9 +32,9 @@ var
   c : ptr cint
   image : pointer
 
-  windowW : cint = 800 #1024
-  windowH : cint = 600 #768
-  window : PGlfwWindow
+  windowW : cint = 1024
+  windowH : cint = 768
+  window : glfw.Window
   camcorder : PCamera
   screen : PScreen
 
@@ -46,7 +46,7 @@ proc error_callback(error: cint, description: cstring ) {.cdecl.} =
   write(stderr, description)
 
 
-proc size_callback(window: PGlfwWindow, width: cint, height: cint) {.cdecl.} =
+proc size_callback(window: glfw.Window, width: cint, height: cint) {.cdecl.} =
   if height == 0:
     windowH = 1
   else:
@@ -60,10 +60,10 @@ proc size_callback(window: PGlfwWindow, width: cint, height: cint) {.cdecl.} =
   camcorder.setFilmHeight(float(windowH))
 
 
-proc key_callback(window : PGlfwWindow, key : cint, scancode : cint,
+proc key_callback(window : glfw.Window, key : cint, scancode : cint,
                   action : cint, mods : cint) {.cdecl.} =
   var t = screen.getKeyMap()
-  var k = (int(key), int8(action))
+  var k = (int(key), int(action))
   if t.hasKey( k ):
     t[k](screen, window, key, scancode, action, mods)
 
@@ -74,23 +74,23 @@ proc initialize() =
 
   enableAutoGlErrorCheck(false)
 
-  glfwSetErrorCallback(error_callback)
+  discard glfw.SetErrorCallback(error_callback)
 
-  if glfwInit() == 0:
+  if glfw.Init() == 0:
       write(stdout, "Could not initialize GLFW! \n")
       quit()
 
-  window = glfwCreateWindow(windowW.cint, windowH.cint, "3Dactoe",
+  window = glfw.CreateWindow(windowW.cint, windowH.cint, "3Dactoe",
                             nil, nil)
   if window == nil:
-      glfwTerminate()
+      glfw.Terminate()
       quit()
 
-  glfwMakeContextCurrent(window)
+  glfw.MakeContextCurrent(window)
 
   opengl.loadExtensions()
 
-  glfwSwapInterval(0)
+  glfw.SwapInterval(0)
   glViewport(0, 0, windowW, windowH)
 
   camcorder = camera.newCamera(float(windowW), float(windowH), 60.0,
@@ -115,16 +115,16 @@ proc initialize() =
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
   ## Callbacks
-  glfwSetWindowSizeCallback(window, size_callback)
-  glfwSetKeyCallback(window, key_callback)
+  discard glfw.SetWindowSizeCallback(window, size_callback)
+  discard glfw.SetKeyCallback(window, key_callback)
 
-  lastTime = glfwGetTime()
+  lastTime = glfw.GetTime()
   lastFPSTime = lastTime
 
 
 proc update() =
 
-  currentTime = glfwGetTime()
+  currentTime = glfw.GetTime()
 
   frameDelta = currentTime - lastTime
 
@@ -132,7 +132,7 @@ proc update() =
 
   if currentTime - lastFPSTime > 1.0:
     frameRate = int(float(frameCount) / (currentTime - lastFPSTime))
-    glfwSetWindowTitle(window, "3Dactoe - FPS = $1" % intToStr(frameRate))
+    glfw.SetWindowTitle(window, "3Dactoe - FPS = $1" % intToStr(frameRate))
 
     lastFPSTime = currentTime
     frameCount = 0
@@ -144,7 +144,7 @@ when isMainModule:
 
   initialize()
 
-  while glfwWindowShouldClose(window) == 0:
+  while glfw.WindowShouldClose(window) == 0:
 
     update()
 
@@ -152,9 +152,8 @@ when isMainModule:
 
     screen.tick()
 
-    glfwSwapBuffers(window)
+    glfw.SwapBuffers(window)
 
-    glfwPollEvents()
+    glfw.PollEvents()
 
-
-  glfwTerminate()
+  glfw.Terminate()

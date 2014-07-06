@@ -1,15 +1,14 @@
 
 import tables
 
-import glfw
-
+import glfw3 as glfw
 import camera
 import menus
 
 
 type
-  TKeyAction = tuple[key:int, action:int8]
-  TScreenKeyCallback = proc (screen: PScreen, window: PGlfwWindow,
+  TKeyAction = tuple[key:int, action:int]
+  TScreenKeyCallback = proc (screen: PScreen, window: glfw.Window,
                              key: cint, scancode: cint, action: cint,
                              mods: cint){.cdecl.}
 
@@ -20,7 +19,7 @@ type
 
   TScreen = object
     screenType* : PScreenType
-    window* : PGlfwWindow
+    window* : glfw.Window
   PScreen* = ref TScreen
 
 
@@ -60,44 +59,44 @@ method selectspace*(screenType : PScreenType) =
 
 
 method beforeDisplay(screenType : PScreenType) =
-  nil
+  discard
 
 
 method display(screenType : PScreenType) =
-  nil
+  discard
 
 
 method afterDisplay(screenType : PScreenType) =
-  nil
+  discard
 
 
 ## Callbacks
-proc upCallback*(screen: PScreen, window: PGlfwWindow,
+proc upCallback*(screen: PScreen, window: glfw.Window,
                 key: cint, scancode: cint, action: cint,
                 mods: cint){.cdecl.} =
     screen.screenType.selectup()
 
-proc downCallback*(screen: PScreen, window: PGlfwWindow,
+proc downCallback*(screen: PScreen, window: glfw.Window,
                   key: cint, scancode: cint, action: cint,
                   mods: cint){.cdecl.} =
     screen.screenType.selectdown()
 
-proc leftCallback*(screen: PScreen, window: PGlfwWindow,
+proc leftCallback*(screen: PScreen, window: glfw.Window,
                   key: cint, scancode: cint, action: cint,
                   mods: cint){.cdecl.} =
     screen.screenType.selectleft()
 
-proc rightCallback*(screen: PScreen, window: PGlfwWindow,
+proc rightCallback*(screen: PScreen, window: glfw.Window,
                   key: cint, scancode: cint, action: cint,
                   mods: cint){.cdecl.} =
     screen.screenType.selectright()
 
-proc enterCallback*(screen: PScreen, window: PGlfwWindow,
+proc enterCallback*(screen: PScreen, window: glfw.Window,
                   key: cint, scancode: cint, action: cint,
                   mods: cint){.cdecl.} =
     screen.screenType.selectenter(screen)
 
-proc spaceCallback*(screen: PScreen, window: PGlfwWindow,
+proc spaceCallback*(screen: PScreen, window: glfw.Window,
                   key: cint, scancode: cint, action: cint,
                   mods: cint){.cdecl.} =
     screen.screenType.selectspace()

@@ -7,13 +7,13 @@ import strutils
 import os
 
 import opengl
-import glfw
 import ftgl
 import soil   #SOIL_load_OGL_texture
 
+import glfw3 as glfw
 import basescreen
 import camera
-from colors import WHITE, RED, BLUE
+from colors import WHITE, RED, BLUE, EARTH
 import shapes
 import general
 
@@ -77,7 +77,6 @@ proc checkTriplet(a : int8, b : int8, c : int8) =
     raise newException(E_base, $(a))
 
 proc checkLayer(grid : seq[int8]) =
-  var tmp : int8
   ## vertical
   for i in 0..2:
     checkTriplet(grid[i], grid[i+3], grid[i+6])
@@ -168,34 +167,34 @@ method selectenter*(screenType : PMatchScreen) =
     echo("No go")
 
 
-proc enterMatchCallback(screen: PScreen, window: PGlfwWindow, key: cint,
+proc enterMatchCallback(screen: PScreen, window: glfw.Window, key: cint,
                         scancode: cint, action: cint, mods: cint) {.cdecl.} =
     screen.screenType.selectenter()
 
-proc zoomInCallback(screen: PScreen, window: PGlfwWindow,
+proc zoomInCallback(screen: PScreen, window: glfw.Window,
                         key: cint, scancode: cint, action: cint,
                         mods: cint){.cdecl.} =
     screen.screenType.camcorder.zoomIn(0.5)
 
-proc zoomOutCallback(screen: PScreen, window: PGlfwWindow,
+proc zoomOutCallback(screen: PScreen, window: glfw.Window,
                         key: cint, scancode: cint, action: cint,
                         mods: cint){.cdecl.} =
     screen.screenType.camcorder.zoomOut(0.5)
 
-proc rotateLeftCallback(screen: PScreen, window: PGlfwWindow,
+proc rotateLeftCallback(screen: PScreen, window: glfw.Window,
                         key: cint, scancode: cint, action: cint,
                         mods: cint){.cdecl.} =
     screen.screenType.camcorder.rotateAround(1.0)
 
-proc rotateRightCallback(screen: PScreen, window: PGlfwWindow,
+proc rotateRightCallback(screen: PScreen, window: glfw.Window,
                         key: cint, scancode: cint, action: cint,
                         mods: cint){.cdecl.} =
     screen.screenType.camcorder.rotateAround(-1.0)
 
-proc nullCallback(screen: PScreen, window: PGlfwWindow,
+proc nullCallback(screen: PScreen, window: glfw.Window,
                   key: cint, scancode: cint, action: cint,
                   mods: cint){.cdecl.} =
-    nil
+    discard
 
 
 proc newMatchScreenType*(cam : PCamera): PMatchScreen =
@@ -212,21 +211,21 @@ proc newMatchScreenType*(cam : PCamera): PMatchScreen =
   setFaceSize(result.screenFont, 75, 72)
 
   ## Key map for this screen type
-  result.keyMap[(GLFW_KEY_UP, GLFW_PRESS)] = upCallback
-  result.keyMap[(GLFW_KEY_DOWN, GLFW_PRESS)] = downCallback
-  result.keyMap[(GLFW_KEY_LEFT, GLFW_PRESS)] = leftCallback
-  result.keyMap[(GLFW_KEY_RIGHT, GLFW_PRESS)] = rightCallback
-  result.keyMap[(GLFW_KEY_SPACE, GLFW_PRESS)] = spaceCallback
-  result.keyMap[(GLFW_KEY_ENTER, GLFW_PRESS)] = enterMatchCallback
+  result.keyMap[(glfw.KEY_UP, glfw.PRESS)] = upCallback
+  result.keyMap[(glfw.KEY_DOWN, glfw.PRESS)] = downCallback
+  result.keyMap[(glfw.KEY_LEFT, glfw.PRESS)] = leftCallback
+  result.keyMap[(glfw.KEY_RIGHT, glfw.PRESS)] = rightCallback
+  result.keyMap[(glfw.KEY_SPACE, glfw.PRESS)] = spaceCallback
+  result.keyMap[(glfw.KEY_ENTER, glfw.PRESS)] = enterMatchCallback
 
-  result.keyMap[(GLFW_KEY_W, GLFW_PRESS)] = zoomInCallback
-  result.keyMap[(GLFW_KEY_S, GLFW_PRESS)] = zoomOutCallback
-  result.keyMap[(GLFW_KEY_A, GLFW_PRESS)] = rotateLeftCallback
-  result.keyMap[(GLFW_KEY_D, GLFW_PRESS)] = rotateRightCallback
-  result.keyMap[(GLFW_KEY_W, GLFW_REPEAT)] = zoomInCallback
-  result.keyMap[(GLFW_KEY_S, GLFW_REPEAT)] = zoomOutCallback
-  result.keyMap[(GLFW_KEY_A, GLFW_REPEAT)] = rotateLeftCallback
-  result.keyMap[(GLFW_KEY_D, GLFW_REPEAT)] = rotateRightCallback
+  result.keyMap[(glfw.KEY_W, glfw.PRESS)] = zoomInCallback
+  result.keyMap[(glfw.KEY_S, glfw.PRESS)] = zoomOutCallback
+  result.keyMap[(glfw.KEY_A, glfw.PRESS)] = rotateLeftCallback
+  result.keyMap[(glfw.KEY_D, glfw.PRESS)] = rotateRightCallback
+  result.keyMap[(glfw.KEY_W, glfw.REPEAT)] = zoomInCallback
+  result.keyMap[(glfw.KEY_S, glfw.REPEAT)] = zoomOutCallback
+  result.keyMap[(glfw.KEY_A, glfw.REPEAT)] = rotateLeftCallback
+  result.keyMap[(glfw.KEY_D, glfw.REPEAT)] = rotateRightCallback
 
   ## load an image file directly as a new OpenGL texture
   var asset_path = joinPath(getCurrentDir(), "assets")
@@ -242,8 +241,8 @@ proc newMatchScreenType*(cam : PCamera): PMatchScreen =
     echo( "SOIL loading error: " & $SOIL_last_result() )
 
 
-from  titlescreen import newTitleScreenType
-proc winCallback(screen: PScreen, window: PGlfwWindow,
+from titlescreen import newTitleScreenType
+proc winCallback(screen: PScreen, window: glfw.Window,
                  key: cint, scancode: cint, action: cint,
                  mods: cint){.cdecl.} =
     screen.screenType = newTitleScreenType(screen.screenType.camcorder)
@@ -344,12 +343,12 @@ proc drawSelector(screenType : PMatchScreen) =
 
 method beforeDisplay*(screenType : PMatchScreen) =
   if screenType.winner != 0'i8 and not screenType.ended:
-    screenType.keyMap[(GLFW_KEY_ENTER, GLFW_PRESS)] = winCallback
-    screenType.keyMap[(GLFW_KEY_UP, GLFW_PRESS)] = nullCallback
-    screenType.keyMap[(GLFW_KEY_DOWN, GLFW_PRESS)] = nullCallback
-    screenType.keyMap[(GLFW_KEY_LEFT, GLFW_PRESS)] = nullCallback
-    screenType.keyMap[(GLFW_KEY_RIGHT, GLFW_PRESS)] = nullCallback
-    screenType.keyMap[(GLFW_KEY_SPACE, GLFW_PRESS)] = nullCallback
+    screenType.keyMap[(glfw.KEY_ENTER, glfw.PRESS)] = winCallback
+    screenType.keyMap[(glfw.KEY_UP, glfw.PRESS)] = nullCallback
+    screenType.keyMap[(glfw.KEY_DOWN, glfw.PRESS)] = nullCallback
+    screenType.keyMap[(glfw.KEY_LEFT, glfw.PRESS)] = nullCallback
+    screenType.keyMap[(glfw.KEY_RIGHT, glfw.PRESS)] = nullCallback
+    screenType.keyMap[(glfw.KEY_SPACE, glfw.PRESS)] = nullCallback
     screenType.ended = true
 
 
@@ -379,6 +378,8 @@ method display*(screenType : PMatchScreen) =
 
 
   if screenType.ended:
+    var color : array[0..3, uint8]
+
     # Interface
     # =========
     screenType.camcorder.setOrthonormalLens()
@@ -387,10 +388,14 @@ method display*(screenType : PMatchScreen) =
     glLoadIdentity()
 
     # Title
-    glColor4ubv(WHITE)
+    glColor4ubv(RED)
     glTranslatef(-screenType.camcorder.filmWidth/2, 3*screenType.camcorder.filmHeight/8.0, 0.0)
     screenType.layout.setLineLength(screenType.camcorder.filmWidth)
     glRasterPos3f(0.0, 0.0, 0.0) #-screenType.camcorder.filmWidth/2.0
+    # if screenType.winner == 0'i8:
+    #   color = RED
+    # else:
+    #   color = BLUE
     var msg = "Player " & $screenType.winner & " won the game!"
     screenType.layout.render(msg, TRenderMode.RenderAll)
 
@@ -399,6 +404,8 @@ method display*(screenType : PMatchScreen) =
     glRasterPos3f(0.0, 0.0, 0.0) #-screenType.camcorder.filmWidth/2.0
     msg = "Press Enter key to go back to the main menu"
     screenType.layout.render(msg, TRenderMode.RenderAll)
+
+    glColor4ubv(WHITE)
 
     glLoadIdentity()
 

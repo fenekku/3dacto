@@ -4,9 +4,9 @@
 import tables
 
 import opengl
-import glfw
 import ftgl
 
+import glfw3 as glfw
 import basescreen
 import camera
 import menus
@@ -36,9 +36,9 @@ proc newTitleScreenType*(cam : PCamera): PTitleScreen =
                                         cam.filmWidth, cam.filmHeight)
 
   ## Key map for this screen type
-  result.keyMap[(GLFW_KEY_UP, GLFW_PRESS)] = upCallback
-  result.keyMap[(GLFW_KEY_DOWN, GLFW_PRESS)] = downCallback
-  result.keyMap[(GLFW_KEY_ENTER, GLFW_PRESS)] = enterCallback
+  result.keyMap[(glfw.KEY_UP, glfw.PRESS)] = upCallback
+  result.keyMap[(glfw.KEY_DOWN, glfw.PRESS)] = downCallback
+  result.keyMap[(glfw.KEY_ENTER, glfw.PRESS)] = enterCallback
 
 
 proc newTitleScreen*(cam : PCamera): PScreen =
@@ -63,13 +63,15 @@ method selectenter*(screenType : PTitleScreen, screen : PScreen) =
     screen.screenType = newMatchScreenType(screenType.camcorder)
   of 1:
     screen.screenType = newLoadScreenType(screenType.camcorder)
+  of 2:
+    echo("Not Implemented!")
   of 3: quit "Exit Game!"
   else:
     echo("selectedIdx " & $screenType.titleMenu.selectedIdx)
 
 
 method beforeDisplay*(screenType : PTitleScreen) =
-  nil
+  discard
 
 
 method display*(screenType : PTitleScreen) =
@@ -101,4 +103,4 @@ method display*(screenType : PTitleScreen) =
   screenType.titleMenu.display()
 
 method afterDisplay*(screenType : PTitleScreen) =
-  nil
+  discard

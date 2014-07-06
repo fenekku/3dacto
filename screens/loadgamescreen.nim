@@ -4,9 +4,9 @@
 import tables
 
 import opengl
-import glfw #GLFW_*
 import ftgl #createBitmapFont
 
+import glfw3 as glfw #glfw.*
 import basescreen
 import camera
 import menus
@@ -38,9 +38,9 @@ proc newLoadScreenType*(cam : PCamera): PLoadScreen =
                                         "Cancel"],
                                         cam.filmWidth, cam.filmHeight)
   ## Key map for this screen type
-  result.keyMap[(GLFW_KEY_UP, GLFW_PRESS)] = upCallback
-  result.keyMap[(GLFW_KEY_DOWN, GLFW_PRESS)] = downCallback
-  result.keyMap[(GLFW_KEY_ENTER, GLFW_PRESS)] = enterCallback
+  result.keyMap[(glfw.KEY_UP, glfw.PRESS)] = upCallback
+  result.keyMap[(glfw.KEY_DOWN, glfw.PRESS)] = downCallback
+  result.keyMap[(glfw.KEY_ENTER, glfw.PRESS)] = enterCallback
 
 
 method selectup*(screenType : PLoadScreen) =
