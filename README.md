@@ -12,10 +12,10 @@ This is a 3d tic-tac-toe game implemented in Nimrod (pretty terribly though ;)).
 - opengl babel package: `babel install opengl`
 - Install the Ubuntu dependencies:
     - Add the pyglfw PPA to get access to libglfw3:
-        ```
-        sudo add-apt-repository ppa:pyglfw/pyglfw
-        sudo apt-get update
-        ```
+        
+            sudo add-apt-repository ppa:pyglfw/pyglfw
+            sudo apt-get update
+        
     - `sudo apt-get install libftgl-dev libsoil-dev libglfw3`
 
 ##Gameplay
