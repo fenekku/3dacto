@@ -36,7 +36,6 @@ var
   windowH : cint = 768
   window : glfw.Window
   camcorder : PCamera
-  screen : PScreen
 
 
 ## Callbacks
@@ -58,14 +57,6 @@ proc size_callback(window: glfw.Window, width: cint, height: cint) {.cdecl.} =
 
   camcorder.setFilmWidth(float(windowW))
   camcorder.setFilmHeight(float(windowH))
-
-
-proc key_callback(window : glfw.Window, key : cint, scancode : cint,
-                  action : cint, mods : cint) {.cdecl.} =
-  var t = screen.getKeyMap()
-  var k = (int(key), int(action))
-  if t.hasKey( k ):
-    t[k](screen, window, key, scancode, action, mods)
 
 
 ## -------------------------------------------------------------------------------
@@ -95,7 +86,7 @@ proc initialize() =
 
   camcorder = camera.newCamera(float(windowW), float(windowH), 60.0,
                                pos = vec3(0.0, 4.0, 8.0))
-  screen = titlescreen.newTitleScreen(camcorder)
+  basescreen.theScreen = titlescreen.newTitleScreen(window, camcorder)
 
   glClearColor(0.0, 0.0, 0.0, 0.0)
   glClearDepth(1.0)                   # Enables Clearing Of The Depth Buffer
@@ -116,7 +107,7 @@ proc initialize() =
 
   ## Callbacks
   discard glfw.SetWindowSizeCallback(window, size_callback)
-  discard glfw.SetKeyCallback(window, key_callback)
+  # discard glfw.SetKeyCallback(window, key_callback)
 
   lastTime = glfw.GetTime()
   lastFPSTime = lastTime
@@ -150,7 +141,7 @@ when isMainModule:
 
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
-    screen.tick()
+    basescreen.theScreen.display()
 
     glfw.SwapBuffers(window)
 

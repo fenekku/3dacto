@@ -1,106 +1,99 @@
 ## Title Screen
 ## ------------------------------------------------------------------
 
-import tables
-
 import opengl
 import ftgl
 
 import glfw3 as glfw
 import basescreen
+# from matchscreen import newMatchScreen
+from loadgamescreen import newLoadScreen
 import camera
 import menus
 import colors
+import fonts
 
 type
-  TTitleScreen = object of TScreenType
+  TTitleScreen = object of TScreen
     title : string
-    titleFont : PFont
     titleMenu : PMenu
     layout : PLayout
   PTitleScreen* = ref TTitleScreen
 
-proc newTitleScreenType*(cam : PCamera): PTitleScreen =
+proc key_callback(window : glfw.Window, key : cint, scancode : cint,
+                  action : cint, mods : cint) {.cdecl.} =
+  if key == glfw.KEY_UP and action == glfw.PRESS:
+    basescreen.theScreen.up()
+  if key == glfw.KEY_DOWN and action == glfw.PRESS:
+    basescreen.theScreen.down()
+  if key == glfw.KEY_ENTER and action == glfw.PRESS:
+    basescreen.theScreen.enter()
+  #Using a reference to basescreen. What this means is unfortunately
+  #basescreen must have an empty implementation of all possible methods
+  #called inside all key_callbacks.
+  #All of this b/c key_callback needs the current screen and can't be
+  #defined as a closure inside the newScreen implementation b/c
+  #glfw.SetKeyCallback(window, key_callback) does not accept closures
+
+
+proc newTitleScreen*(window: glfw.Window, camcorder: PCamera): PTitleScreen =
   new(result)
-  initScreenType(result, cam)
-  result.title = "3Dactoe"
-  result.titleFont = ftgl.createBitmapFont("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf")
-  result.layout = createSimpleLayout()
-  result.layout.setFont(result.titleFont)
-  result.layout.setAlignment(TTextAlignment.AlignCenter)
+  result.window = window
+  result.camcorder = camcorder
+  result.title = "Threedacto"
+  result.layout = ftgl.createSimpleLayout()
+  result.layout.setFont(fonts.FreeSansBold)
+  result.layout.setAlignment(ftgl.TTextAlignment.AlignCenter)
+  setFaceSize(fonts.FreeSansBold, 70, 72)
+  result.titleMenu = menus.newTitleMenu(camcorder, "New Game",
+                                        "Multiplayer Game",
+                                        "Load Game", "Quit Game")
+  discard glfw.SetKeyCallback(window, key_callback)
 
-  setFaceSize(result.titleFont, 70, 72 )
-  result.titleMenu = menus.newTitleMenu(["New Game", "Load Game",
-                                         "Multiplayer Game",
-                                         "Exit Game"],
-                                        cam.filmWidth, cam.filmHeight)
+method up(s : PTitleScreen) =
+  s.titleMenu.up()
 
-  ## Key map for this screen type
-  result.keyMap[(glfw.KEY_UP, glfw.PRESS)] = upCallback
-  result.keyMap[(glfw.KEY_DOWN, glfw.PRESS)] = downCallback
-  result.keyMap[(glfw.KEY_ENTER, glfw.PRESS)] = enterCallback
+method down(s : PTitleScreen) =
+  s.titleMenu.down()
 
-
-proc newTitleScreen*(cam : PCamera): PScreen =
-  new(result)
-  result.screenType = newTitleScreenType(cam)
-
-
-method selectup*(screenType : PTitleScreen) =
-  screenType.titleMenu.selectup()
-
-
-method selectdown*(screenType : PTitleScreen) =
-  screenType.titleMenu.selectdown()
-
-
-from matchscreen import newMatchScreenType
-from loadgamescreen import newLoadScreenType
-
-method selectenter*(screenType : PTitleScreen, screen : PScreen) =
-  case screenType.titleMenu.selectedIdx
+method enter(s : PTitleScreen) =
+  case s.titleMenu.selectedIdx
   of 0:
-    screen.screenType = newMatchScreenType(screenType.camcorder)
-  of 1:
-    screen.screenType = newLoadScreenType(screenType.camcorder)
-  of 2:
     echo("Not Implemented!")
-  of 3: quit "Exit Game!"
+    # basescreen.theScreen = newMatchScreen(window, camcorder)
+  of 1:
+    echo("Not Implemented!")
+  of 2:
+    basescreen.theScreen = newLoadScreen(s)
+  of 3: quit "Exit Game!", QuitSuccess
   else:
-    echo("selectedIdx " & $screenType.titleMenu.selectedIdx)
+    echo("This should not happen")
 
-
-method beforeDisplay*(screenType : PTitleScreen) =
-  discard
-
-
-method display*(screenType : PTitleScreen) =
+method display*(s : PTitleScreen) =
   ## Display the Title Screen
 
   # Actual world of game
   # ====================
-  screenType.camcorder.place()
+  s.camcorder.place()
 
   # Interface
   # =========
-  screenType.camcorder.setOrthonormalLens()
+  s.camcorder.setOrthonormalLens()
 
   glMatrixMode(GL_MODELVIEW)
   glLoadIdentity()
 
   # Title
   glColor4ubv(colors.WHITE)
-  glTranslatef(-screenType.camcorder.filmWidth/2, 3*screenType.camcorder.filmHeight/8.0, 0.0)
-  screenType.layout.setLineLength(screenType.camcorder.filmWidth)
+  glTranslatef(-s.camcorder.filmWidth/2,
+               3*s.camcorder.filmHeight/8.0, 0.0)
+  s.layout.setLineLength(s.camcorder.filmWidth)
 
   glRasterPos3f(0.0, 0.0, 0.0) #-screenType.camcorder.filmWidth/2.0
-  screenType.layout.render(screenType.title, TRenderMode.RenderAll)
+  s.layout.render(s.title, TRenderMode.RenderAll)
 
   glLoadIdentity()
 
   # Menu options
-  glTranslatef(0.0, screenType.camcorder.filmHeight/4.0, 0.0)
-  screenType.titleMenu.display()
-
-method afterDisplay*(screenType : PTitleScreen) =
-  discard
+  glTranslatef(0.0, s.camcorder.filmHeight/4.0, 0.0)
+  s.titleMenu.display()

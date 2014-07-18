@@ -1,85 +1,89 @@
 ## Load Game Screen
 ##-----------------
 
-import tables
-
 import opengl
 import ftgl #createBitmapFont
 
 import glfw3 as glfw #glfw.*
 import basescreen
-import camera
 import menus
 import colors
-
+import fonts
+import camera
 
 type
-  TLoadScreen* = object of TScreenType
+  TLoadScreen* = object of TScreen
     title : string
-    titleFont : PFont
     loadMenu : PMenu
     layout : PLayout
+    parent : PScreen
   PLoadScreen* = ref TLoadScreen
 
+proc key_callback(window : glfw.Window, key : cint, scancode : cint,
+                  action : cint, mods : cint) {.cdecl.} =
+  if key == glfw.KEY_UP and action == glfw.PRESS:
+    basescreen.theScreen.up()
+  if key == glfw.KEY_DOWN and action == glfw.PRESS:
+    basescreen.theScreen.down()
+  if key == glfw.KEY_ENTER and action == glfw.PRESS:
+    basescreen.theScreen.enter()
 
-proc newLoadScreenType*(cam : PCamera): PLoadScreen =
+
+proc newLoadScreen*(parent: PScreen): PLoadScreen =
   new(result)
-  basescreen.initScreenType(result, cam)
+  result.window = parent.window
+  result.camcorder = parent.camcorder
+  result.parent = parent
   result.title = "Load Game"
-  result.titleFont = ftgl.createBitmapFont("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf")
-  result.layout = createSimpleLayout()
-  result.layout.setFont(result.titleFont)
-  result.layout.setAlignment(TTextAlignment.AlignCenter)
-
-  setFaceSize(result.titleFont, 75, 72)
-  result.loadMenu = menus.newTitleMenu(["Game 1",
-                                        "Game 2",
-                                        "Game 3",
-                                        "Cancel"],
-                                        cam.filmWidth, cam.filmHeight)
-  ## Key map for this screen type
-  result.keyMap[(glfw.KEY_UP, glfw.PRESS)] = upCallback
-  result.keyMap[(glfw.KEY_DOWN, glfw.PRESS)] = downCallback
-  result.keyMap[(glfw.KEY_ENTER, glfw.PRESS)] = enterCallback
+  result.loadMenu = menus.newTitleMenu(parent.camcorder, "Game 1",
+                                       "Game 2", "Game 3", "Cancel")
+  result.layout = ftgl.createSimpleLayout()
+  result.layout.setFont(fonts.FreeSansBold)
+  result.layout.setAlignment(ftgl.TTextAlignment.AlignCenter)
+  setFaceSize(fonts.FreeSansBold, 75, 72)
+  discard glfw.SetKeyCallback(parent.window, key_callback)
 
 
-method selectup*(screenType : PLoadScreen) =
-  screenType.loadMenu.selectup()
+method up(s : PLoadScreen) =
+  s.loadMenu.up()
 
 
-method selectdown*(screenType : PLoadScreen) =
-  screenType.loadMenu.selectdown()
+method down(s : PLoadScreen) =
+  s.loadMenu.down()
 
 
-from  titlescreen import newTitleScreenType
-
-method selectenter*(screenType : PLoadScreen, screen : PScreen) =
-  case screenType.loadMenu.selectedIdx
+method enter*(s : PLoadScreen) =
+  case s.loadMenu.selectedIdx
   of 3:
-    screen.screenType = titlescreen.newTitleScreenType(screenType.camcorder)
+    basescreen.theScreen = s.parent
   else:
-    echo("selectedIdx " & $screenType.loadMenu.selectedIdx)
+    echo "Not implemented yet"
 
 
-method display*(screenType : PLoadScreen) =
+method display*(s : PLoadScreen) =
   ## Display the Load Screen
 
-  screenType.camcorder.place()
-  screenType.camcorder.setOrthonormalLens()
+  # Actual world of game
+  # ====================
+  s.camcorder.place()
+
+  # Interface
+  # =========
+  s.camcorder.setOrthonormalLens()
 
   glMatrixMode(GL_MODELVIEW)
   glLoadIdentity()
 
   # Title
   glColor4ubv(colors.WHITE)
-  glTranslatef(0.0, 3*screenType.camcorder.filmHeight/8.0, 0.0)
+  glTranslatef(0.0, 3*s.camcorder.filmHeight/8.0, 0.0)
 
-  screenType.layout.setLineLength(screenType.camcorder.filmWidth)
-  glRasterPos3f(-screenType.camcorder.filmWidth/2.0, 0.0, 0.0)
-  screenType.layout.render(screenType.title, TRenderMode.RenderAll)
+  s.layout.setLineLength(s.camcorder.filmWidth)
+  glRasterPos3f(-s.camcorder.filmWidth/2.0, 0.0, 0.0)
+  s.layout.render(s.title, ftgl.TRenderMode.RenderAll)
 
   glLoadIdentity()
 
   # Menu options
-  glTranslatef(0.0, screenType.camcorder.filmHeight/4.0, 0.0)
-  screenType.loadMenu.display()
+  glTranslatef(0.0, s.camcorder.filmHeight/4.0, 0.0)
+  s.loadMenu.display()

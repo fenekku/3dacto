@@ -1,114 +1,76 @@
 
-import tables
-
 import glfw3 as glfw
 import camera
-import menus
 
 
 type
-  TKeyAction = tuple[key:int, action:int]
-  TScreenKeyCallback = proc (screen: PScreen, window: glfw.Window,
-                             key: cint, scancode: cint, action: cint,
-                             mods: cint){.cdecl.}
-
-  TScreenType* {.inheritable.} = object
-    camcorder* : PCamera
-    keyMap* : TTable[TKeyAction, TScreenKeyCallback]
-  PScreenType* = ref TScreenType
-
-  TScreen = object
-    screenType* : PScreenType
+  TScreen* = object of TObject
     window* : glfw.Window
+    camcorder*: PCamera
   PScreen* = ref TScreen
 
-
-## Basic ScreenType
-## ------------------------------------------------------------------
-proc initScreenType*(screenType : PScreenType, cam : PCamera) =
-  screenType.camcorder = cam
-  screenType.keyMap = initTable[TKeyAction, TScreenKeyCallback]()
+var
+  theScreen* : PScreen
 
 
-method selectup*(screenType : PScreenType) =
-  echo("Select Up")
+method up*(s : PScreen) =
+  discard
+
+method down*(s : PScreen) =
+  discard
+
+method enter*(s : PScreen) =
+  discard
+
+# method selectleft*(screenType : PScreenType) =
+#   echo("Select left")
 
 
-method selectdown*(screenType : PScreenType) =
-  echo("Select Down")
+# method selectright*(screenType : PScreenType) =
+#   echo("Select right")
 
 
-method selectleft*(screenType : PScreenType) =
-  echo("Select left")
+
+# method beforeDisplay(screenType : PScreenType) =
+#   discard
 
 
-method selectright*(screenType : PScreenType) =
-  echo("Select right")
-
-
-method selectenter*(screenType : PScreenType, screen : PScreen) =
-  echo("Select Enter")
-
-
-method selectenter*(screenType : PScreenType) =
-  echo("Select Enter")
-
-
-method selectspace*(screenType : PScreenType) =
-  echo("Select Enter")
-
-
-method beforeDisplay(screenType : PScreenType) =
+method display*(s : PScreen) =
   discard
 
 
-method display(screenType : PScreenType) =
-  discard
+# method afterDisplay(screenType : PScreenType) =
+#   discard
 
 
-method afterDisplay(screenType : PScreenType) =
-  discard
+# ## Callbacks
+# proc upCallback*(screen: PScreen, window: glfw.Window,
+#                 key: cint, scancode: cint, action: cint,
+#                 mods: cint){.cdecl.} =
+#     screen.screenType.selectup()
 
+# proc downCallback*(screen: PScreen, window: glfw.Window,
+#                   key: cint, scancode: cint, action: cint,
+#                   mods: cint){.cdecl.} =
+#     screen.screenType.selectdown()
 
-## Callbacks
-proc upCallback*(screen: PScreen, window: glfw.Window,
-                key: cint, scancode: cint, action: cint,
-                mods: cint){.cdecl.} =
-    screen.screenType.selectup()
+# proc leftCallback*(screen: PScreen, window: glfw.Window,
+#                   key: cint, scancode: cint, action: cint,
+#                   mods: cint){.cdecl.} =
+#     screen.screenType.selectleft()
 
-proc downCallback*(screen: PScreen, window: glfw.Window,
-                  key: cint, scancode: cint, action: cint,
-                  mods: cint){.cdecl.} =
-    screen.screenType.selectdown()
+# proc rightCallback*(screen: PScreen, window: glfw.Window,
+#                   key: cint, scancode: cint, action: cint,
+#                   mods: cint){.cdecl.} =
+#     screen.screenType.selectright()
 
-proc leftCallback*(screen: PScreen, window: glfw.Window,
-                  key: cint, scancode: cint, action: cint,
-                  mods: cint){.cdecl.} =
-    screen.screenType.selectleft()
+# proc enterCallback*(screen: PScreen, window: glfw.Window,
+#                   key: cint, scancode: cint, action: cint,
+#                   mods: cint){.cdecl.} =
+#     screen.screenType.selectenter(screen)
 
-proc rightCallback*(screen: PScreen, window: glfw.Window,
-                  key: cint, scancode: cint, action: cint,
-                  mods: cint){.cdecl.} =
-    screen.screenType.selectright()
-
-proc enterCallback*(screen: PScreen, window: glfw.Window,
-                  key: cint, scancode: cint, action: cint,
-                  mods: cint){.cdecl.} =
-    screen.screenType.selectenter(screen)
-
-proc spaceCallback*(screen: PScreen, window: glfw.Window,
-                  key: cint, scancode: cint, action: cint,
-                  mods: cint){.cdecl.} =
-    screen.screenType.selectspace()
-
-## Screen
-## ------------------------------------------------------------------
-proc getKeyMap*(screen : PScreen): TTable[TKeyAction, TScreenKeyCallback] =
-  return screen.screenType.keyMap
-
-
-proc tick*(screen : PScreen) =
-  screen.screenType.beforeDisplay()
-  screen.screenType.display()
-  screen.screenType.afterDisplay()
+# proc spaceCallback*(screen: PScreen, window: glfw.Window,
+#                   key: cint, scancode: cint, action: cint,
+#                   mods: cint){.cdecl.} =
+#     screen.screenType.selectspace()
 

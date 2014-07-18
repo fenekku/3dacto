@@ -4,8 +4,8 @@ import ftgl
 
 import colors
 import cycle
-import general
 import textbox
+import camera
 
 type
   TMenu* {.inheritable.} = object
@@ -55,19 +55,20 @@ proc initMenu(menu : PMenu; labels : varargs[string];
 
 
 ## Title Menu
-proc newTitleMenu*(labels : varargs[string], width : float,
-                   height : float): PMenu =
+proc newTitleMenu*(camcorder : PCamera, labels : varargs[string]): PMenu =
   new(result)
-  initMenu(result, labels, width, height)
+  initMenu(result, labels, camcorder.filmWidth, camcorder.filmHeight)
 
 
-method selectup*(menu : PMenu) =
+method up*(menu : PMenu) =
   menu.selectedIdx = (menu.selectedIdx - 1 + menu.entries.len()) mod menu.entries.len()
 
 
-method selectdown*(menu : PMenu) =
+method down*(menu : PMenu) =
   menu.selectedIdx = (menu.selectedIdx + 1 + menu.entries.len()) mod menu.entries.len()
 
+# method enter*(menu : PMenu): int =
+#   result
 
 method display*(m : PMenu) =
   glPushMatrix()
