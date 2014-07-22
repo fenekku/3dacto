@@ -6,7 +6,7 @@ import ftgl
 
 import glfw3 as glfw
 import basescreen
-# from matchscreen import newMatchScreen
+from matchscreen import newMatchScreen
 from loadgamescreen import newLoadScreen
 import camera
 import menus
@@ -59,8 +59,7 @@ method down(s : PTitleScreen) =
 method enter(s : PTitleScreen) =
   case s.titleMenu.selectedIdx
   of 0:
-    echo("Not Implemented!")
-    # basescreen.theScreen = newMatchScreen(window, camcorder)
+    basescreen.theScreen = newMatchScreen(s)
   of 1:
     echo("Not Implemented!")
   of 2:

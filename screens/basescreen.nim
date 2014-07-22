@@ -22,55 +22,26 @@ method down*(s : PScreen) =
 method enter*(s : PScreen) =
   discard
 
-# method selectleft*(screenType : PScreenType) =
-#   echo("Select left")
+method left*(s : PScreen) =
+  discard
 
+method right*(s : PScreen) =
+  discard
 
-# method selectright*(screenType : PScreenType) =
-#   echo("Select right")
+method space*(s : PScreen) =
+  discard
 
+method zoomIn*(s : PScreen) =
+  discard
 
+method zoomOut*(s : PScreen) =
+  discard
 
-# method beforeDisplay(screenType : PScreenType) =
-#   discard
+method rotateRight*(s : PScreen) =
+  discard
 
+method rotateLeft*(s : PScreen) =
+  discard
 
 method display*(s : PScreen) =
   discard
-
-
-# method afterDisplay(screenType : PScreenType) =
-#   discard
-
-
-# ## Callbacks
-# proc upCallback*(screen: PScreen, window: glfw.Window,
-#                 key: cint, scancode: cint, action: cint,
-#                 mods: cint){.cdecl.} =
-#     screen.screenType.selectup()
-
-# proc downCallback*(screen: PScreen, window: glfw.Window,
-#                   key: cint, scancode: cint, action: cint,
-#                   mods: cint){.cdecl.} =
-#     screen.screenType.selectdown()
-
-# proc leftCallback*(screen: PScreen, window: glfw.Window,
-#                   key: cint, scancode: cint, action: cint,
-#                   mods: cint){.cdecl.} =
-#     screen.screenType.selectleft()
-
-# proc rightCallback*(screen: PScreen, window: glfw.Window,
-#                   key: cint, scancode: cint, action: cint,
-#                   mods: cint){.cdecl.} =
-#     screen.screenType.selectright()
-
-# proc enterCallback*(screen: PScreen, window: glfw.Window,
-#                   key: cint, scancode: cint, action: cint,
-#                   mods: cint){.cdecl.} =
-#     screen.screenType.selectenter(screen)
-
-# proc spaceCallback*(screen: PScreen, window: glfw.Window,
-#                   key: cint, scancode: cint, action: cint,
-#                   mods: cint){.cdecl.} =
-#     screen.screenType.selectspace()
-

@@ -2,7 +2,7 @@
 ##-----------------
 
 import opengl
-import ftgl #createBitmapFont
+import ftgl
 
 import glfw3 as glfw #glfw.*
 import basescreen

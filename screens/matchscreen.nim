@@ -1,7 +1,6 @@
 # Match Screen
 # ------------------------------------------------------------------
 
-import tables
 import unsigned #unsigned comparisons
 import strutils
 import os
@@ -10,20 +9,21 @@ import opengl
 import ftgl
 import soil   #SOIL_load_OGL_texture
 
-import glfw3 as glfw
 import basescreen
+import glfw3 as glfw
 import camera
-from colors import WHITE, RED, BLUE, EARTH
+import fonts
+from colors import WHITE, RED, BLUE
 import shapes
-import general
+
 
 type
-  TMatchScreen = object of TScreenType
+  TMatchScreen = object of TScreen
+    parent: PScreen
     numberPlayers : int
     currentPlayer : int8
     winner : int8
     layout : PLayout
-    screenFont : PFont
     selector : int
     ended : bool
     spaces : array[0..26, int8] #start at bottom layer as such:
@@ -37,37 +37,98 @@ var
   X_texture : uint32
 
 
-method selectup*(screenType : PMatchScreen) =
-  if screenType.selector mod 9 in 6..8:
-    screenType.selector -= 6
+proc key_callback(window : glfw.Window, key : cint, scancode : cint,
+                  action : cint, mods : cint) {.cdecl.} =
+  if key == glfw.KEY_UP and action == glfw.PRESS:
+    basescreen.theScreen.up()
+  if key == glfw.KEY_DOWN and action == glfw.PRESS:
+    basescreen.theScreen.down()
+  if key == glfw.KEY_LEFT and action == glfw.PRESS:
+    basescreen.theScreen.left()
+  if key == glfw.KEY_RIGHT and action == glfw.PRESS:
+    basescreen.theScreen.right()
+  if key == glfw.KEY_ENTER and action == glfw.PRESS:
+    basescreen.theScreen.enter()
+  if key == glfw.KEY_SPACE and action == glfw.PRESS:
+    basescreen.theScreen.space()
+  if key == glfw.KEY_W and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
+    basescreen.theScreen.zoomIn()
+  if key == glfw.KEY_S and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
+    basescreen.theScreen.zoomOut()
+  if key == glfw.KEY_A and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
+    basescreen.theScreen.rotateLeft()
+  if key == glfw.KEY_D and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
+    basescreen.theScreen.rotateRight()
+
+
+proc newMatchScreen*(parent: PScreen): PMatchScreen =
+  new(result)
+  result.window = parent.window
+  result.camcorder = parent.camcorder
+  result.parent = parent
+  result.numberPlayers = 2
+  result.currentPlayer = 1'i8
+  result.winner = 0'i8
+  result.layout = ftgl.createSimpleLayout()
+  result.layout.setFont(fonts.FreeSansBold)
+  result.layout.setAlignment(ftgl.TTextAlignment.AlignCenter)
+  setFaceSize(fonts.FreeSansBold, 75, 72)
+
+  ## load an image file directly as a new OpenGL texture
+  let asset_path = joinPath(getCurrentDir(), "assets")
+  O_texture = soil.SOIL_load_OGL_texture(joinPath(asset_path, "circle-white-on-black.png"),
+                                         SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
+                                         SOIL_FLAG_MIPMAPS or SOIL_FLAG_INVERT_Y or SOIL_FLAG_NTSC_SAFE_RGB or SOIL_FLAG_COMPRESS_TO_DXT)
+  X_texture = soil.SOIL_load_OGL_texture(joinPath(asset_path, "x-white-on-black.png"),
+                                         SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
+                                         SOIL_FLAG_MIPMAPS or SOIL_FLAG_INVERT_Y or SOIL_FLAG_NTSC_SAFE_RGB or SOIL_FLAG_COMPRESS_TO_DXT)
+
+  ## check for an error during the load process
+  if( (0'u32 == O_texture) or (0'u32 == X_texture) ):
+    echo( "SOIL loading error: " & $SOIL_last_result() )
+
+  discard glfw.SetKeyCallback(parent.window, key_callback)
+
+
+method up(s : PMatchScreen) =
+  if s.selector mod 9 in 6..8:
+    s.selector -= 6
   else:
-    screenType.selector +=3
+    s.selector += 3
 
-
-method selectdown*(screenType : PMatchScreen) =
-  if screenType.selector mod 9 in 0..2:
-    screenType.selector += 6
+method down(s : PMatchScreen) =
+  if s.selector mod 9 in 0..2:
+    s.selector += 6
   else:
-    screenType.selector -=3
+    s.selector -=3
 
-
-method selectright*(screenType : PMatchScreen) =
-  if screenType.selector mod 3 == 2:
-    screenType.selector -= 2
+method right(s : PMatchScreen) =
+  if s.selector mod 3 == 2:
+    s.selector -= 2
   else:
-    screenType.selector += 1
+    s.selector += 1
 
-
-method selectleft*(screenType : PMatchScreen) =
-  if screenType.selector mod 3 == 0:
-    screenType.selector += 2
+method left(s : PMatchScreen) =
+  if s.selector mod 3 == 0:
+    s.selector += 2
   else:
-    screenType.selector -= 1
+    s.selector -= 1
 
+method space(s : PMatchScreen) =
+  s.selector += 9
+  s.selector = s.selector mod 27
 
-method selectspace*(screenType : PMatchScreen) =
-  screenType.selector += 9
-  screenType.selector = screenType.selector mod 27
+method zoomIn(s: PMatchScreen) =
+  s.camcorder.zoomIn(0.5)
+
+method zoomOut(s: PMatchScreen)  =
+  s.camcorder.zoomOut(0.5)
+
+method rotateLeft(s: PMatchScreen) =
+  s.camcorder.rotateAround(1.0)
+
+method rotateRight(s: PMatchScreen) =
+  s.camcorder.rotateAround(-1.0)
 
 
 proc checkTriplet(a : int8, b : int8, c : int8) =
@@ -75,6 +136,7 @@ proc checkTriplet(a : int8, b : int8, c : int8) =
     return
   elif (a == b) and (b == c):
     raise newException(E_base, $(a))
+
 
 proc checkLayer(grid : seq[int8]) =
   ## vertical
@@ -89,163 +151,62 @@ proc checkLayer(grid : seq[int8]) =
   return
 
 
-proc getWinner(screenType : PMatchScreen): int8 =
+proc getWinner(s : PMatchScreen) =
   try:
     #bottom up
-    checkLayer(screenType.spaces[0..8])
-    checkLayer(screenType.spaces[9..17])
-    checkLayer(screenType.spaces[18..26])
+    checkLayer(s.spaces[0..8])
+    checkLayer(s.spaces[9..17])
+    checkLayer(s.spaces[18..26])
 
     #front back
-    checkLayer(@[ screenType.spaces[0], screenType.spaces[1], screenType.spaces[2],
-                 screenType.spaces[9], screenType.spaces[10], screenType.spaces[11],
-                 screenType.spaces[18], screenType.spaces[19], screenType.spaces[20]
+    checkLayer(@[ s.spaces[0], s.spaces[1], s.spaces[2],
+                 s.spaces[9], s.spaces[10], s.spaces[11],
+                 s.spaces[18], s.spaces[19], s.spaces[20]
                ])
-    checkLayer(@[ screenType.spaces[3], screenType.spaces[4], screenType.spaces[5],
-                 screenType.spaces[12], screenType.spaces[13], screenType.spaces[14],
-                 screenType.spaces[21], screenType.spaces[22], screenType.spaces[23]
+    checkLayer(@[ s.spaces[3], s.spaces[4], s.spaces[5],
+                 s.spaces[12], s.spaces[13], s.spaces[14],
+                 s.spaces[21], s.spaces[22], s.spaces[23]
               ])
-    checkLayer(@[ screenType.spaces[6], screenType.spaces[7], screenType.spaces[8],
-                 screenType.spaces[15], screenType.spaces[16], screenType.spaces[17],
-                 screenType.spaces[24], screenType.spaces[25], screenType.spaces[26]
+    checkLayer(@[ s.spaces[6], s.spaces[7], s.spaces[8],
+                 s.spaces[15], s.spaces[16], s.spaces[17],
+                 s.spaces[24], s.spaces[25], s.spaces[26]
               ])
 
     #left right
-    checkLayer(@[ screenType.spaces[0], screenType.spaces[3], screenType.spaces[6],
-                 screenType.spaces[9], screenType.spaces[12], screenType.spaces[15],
-                 screenType.spaces[18], screenType.spaces[21], screenType.spaces[24]
+    checkLayer(@[ s.spaces[0], s.spaces[3], s.spaces[6],
+                 s.spaces[9], s.spaces[12], s.spaces[15],
+                 s.spaces[18], s.spaces[21], s.spaces[24]
               ])
-    checkLayer(@[ screenType.spaces[1], screenType.spaces[4], screenType.spaces[7],
-                 screenType.spaces[10], screenType.spaces[13], screenType.spaces[16],
-                 screenType.spaces[19], screenType.spaces[22], screenType.spaces[25]
+    checkLayer(@[ s.spaces[1], s.spaces[4], s.spaces[7],
+                 s.spaces[10], s.spaces[13], s.spaces[16],
+                 s.spaces[19], s.spaces[22], s.spaces[25]
               ])
-    checkLayer(@[ screenType.spaces[2], screenType.spaces[5], screenType.spaces[8],
-                 screenType.spaces[11], screenType.spaces[14], screenType.spaces[17],
-                 screenType.spaces[20], screenType.spaces[23], screenType.spaces[26]
+    checkLayer(@[ s.spaces[2], s.spaces[5], s.spaces[8],
+                 s.spaces[11], s.spaces[14], s.spaces[17],
+                 s.spaces[20], s.spaces[23], s.spaces[26]
               ])
 
     #diagonals
-    checkTriplet(screenType.spaces[0], screenType.spaces[13], screenType.spaces[26])
-    checkTriplet(screenType.spaces[18], screenType.spaces[13], screenType.spaces[8])
-    checkTriplet(screenType.spaces[6], screenType.spaces[13], screenType.spaces[20])
-    checkTriplet(screenType.spaces[24], screenType.spaces[13], screenType.spaces[2])
-    return 0'i8
+    checkTriplet(s.spaces[0], s.spaces[13], s.spaces[26])
+    checkTriplet(s.spaces[18], s.spaces[13], s.spaces[8])
+    checkTriplet(s.spaces[6], s.spaces[13], s.spaces[20])
+    checkTriplet(s.spaces[24], s.spaces[13], s.spaces[2])
+    s.winner = 0'i8
   except:
     let msg = getCurrentExceptionMsg()
-    return int8(parseInt(msg))
-
-# proc getWinner(model : PModel): int8 =
-#   var grid : array[0..8, int8]
-#   if winner == 0:
-#     for level in 0..2:
-#       grad = [ screenType.spaces[9*level..9*level+8]
-#       winner = tictactoeRulesCheck(grid)
-#       if winner != 0:
-#         break
-
-#   if winner == 0:
-#     for depth in 0..2:
-#       grid = [screenType.spaces[depth*3], screenType.spaces[1+depth*3], screenType.spaces[2+depth*3]
-#               screenType.spaces[depth*3+9], screenType.spaces[1+depth*3+9], screenType.spaces[2+depth*3+9]
-#               screenType.spaces[1+depth*3+18], screenType.spaces[1+depth*3+18], screenType.spaces[2+depth*3+18]]
-#       winner = tictactoeRulesCheck(grid)
-#       if winner != 0:
-#         break
-
-#   if winner == 0:
-#       winner = checkTriplet(screenType.spaces[0], screenType.spaces[13], screenType.spaces[26])
-#       if winner == 0:
-#         winner = checkTriplet(screenType.spaces[2], screenType.spaces[13], screenType.spaces[24])
+    s.winner = int8(parseInt(msg))
 
 
-method selectenter*(screenType : PMatchScreen) =
-  if screenType.spaces[screenType.selector] == 0:
-    screenType.spaces[screenType.selector] = screenType.currentPlayer
-    screenType.winner = getWinner(screenType)
-    screenType.currentPlayer = (screenType.currentPlayer mod 2'i8) + 1'i8
+method enter*(s : PMatchScreen) =
+  if s.winner != 0'i8:
+    basescreen.theScreen = s.parent
   else:
-    echo("No go")
-
-
-proc enterMatchCallback(screen: PScreen, window: glfw.Window, key: cint,
-                        scancode: cint, action: cint, mods: cint) {.cdecl.} =
-    screen.screenType.selectenter()
-
-proc zoomInCallback(screen: PScreen, window: glfw.Window,
-                        key: cint, scancode: cint, action: cint,
-                        mods: cint){.cdecl.} =
-    screen.screenType.camcorder.zoomIn(0.5)
-
-proc zoomOutCallback(screen: PScreen, window: glfw.Window,
-                        key: cint, scancode: cint, action: cint,
-                        mods: cint){.cdecl.} =
-    screen.screenType.camcorder.zoomOut(0.5)
-
-proc rotateLeftCallback(screen: PScreen, window: glfw.Window,
-                        key: cint, scancode: cint, action: cint,
-                        mods: cint){.cdecl.} =
-    screen.screenType.camcorder.rotateAround(1.0)
-
-proc rotateRightCallback(screen: PScreen, window: glfw.Window,
-                        key: cint, scancode: cint, action: cint,
-                        mods: cint){.cdecl.} =
-    screen.screenType.camcorder.rotateAround(-1.0)
-
-proc nullCallback(screen: PScreen, window: glfw.Window,
-                  key: cint, scancode: cint, action: cint,
-                  mods: cint){.cdecl.} =
-    discard
-
-
-proc newMatchScreenType*(cam : PCamera): PMatchScreen =
-  new(result)
-  initScreenType(result, cam)
-  result.numberPlayers = 2
-  result.currentPlayer = 1'i8
-  result.winner = 0'i8
-  result.screenFont = ftgl.createBitmapFont("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf")
-  result.layout = createSimpleLayout()
-  result.layout.setFont(result.screenFont)
-  result.layout.setAlignment(TTextAlignment.AlignCenter)
-
-  setFaceSize(result.screenFont, 75, 72)
-
-  ## Key map for this screen type
-  result.keyMap[(glfw.KEY_UP, glfw.PRESS)] = upCallback
-  result.keyMap[(glfw.KEY_DOWN, glfw.PRESS)] = downCallback
-  result.keyMap[(glfw.KEY_LEFT, glfw.PRESS)] = leftCallback
-  result.keyMap[(glfw.KEY_RIGHT, glfw.PRESS)] = rightCallback
-  result.keyMap[(glfw.KEY_SPACE, glfw.PRESS)] = spaceCallback
-  result.keyMap[(glfw.KEY_ENTER, glfw.PRESS)] = enterMatchCallback
-
-  result.keyMap[(glfw.KEY_W, glfw.PRESS)] = zoomInCallback
-  result.keyMap[(glfw.KEY_S, glfw.PRESS)] = zoomOutCallback
-  result.keyMap[(glfw.KEY_A, glfw.PRESS)] = rotateLeftCallback
-  result.keyMap[(glfw.KEY_D, glfw.PRESS)] = rotateRightCallback
-  result.keyMap[(glfw.KEY_W, glfw.REPEAT)] = zoomInCallback
-  result.keyMap[(glfw.KEY_S, glfw.REPEAT)] = zoomOutCallback
-  result.keyMap[(glfw.KEY_A, glfw.REPEAT)] = rotateLeftCallback
-  result.keyMap[(glfw.KEY_D, glfw.REPEAT)] = rotateRightCallback
-
-  ## load an image file directly as a new OpenGL texture
-  var asset_path = joinPath(getCurrentDir(), "assets")
-  O_texture = soil.SOIL_load_OGL_texture(joinPath(asset_path, "circle-white-on-black.png"),
-                                         SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
-                                         SOIL_FLAG_MIPMAPS or SOIL_FLAG_INVERT_Y or SOIL_FLAG_NTSC_SAFE_RGB or SOIL_FLAG_COMPRESS_TO_DXT)
-  X_texture = soil.SOIL_load_OGL_texture(joinPath(asset_path, "x-white-on-black.png"),
-                                         SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID,
-                                         SOIL_FLAG_MIPMAPS or SOIL_FLAG_INVERT_Y or SOIL_FLAG_NTSC_SAFE_RGB or SOIL_FLAG_COMPRESS_TO_DXT)
-
-  ## check for an error during the load process
-  if( (0'u32 == O_texture) or (0'u32 == X_texture) ):
-    echo( "SOIL loading error: " & $SOIL_last_result() )
-
-
-from titlescreen import newTitleScreenType
-proc winCallback(screen: PScreen, window: glfw.Window,
-                 key: cint, scancode: cint, action: cint,
-                 mods: cint){.cdecl.} =
-    screen.screenType = newTitleScreenType(screen.screenType.camcorder)
+    if s.spaces[s.selector] == 0:
+      s.spaces[s.selector] = s.currentPlayer
+      s.getWinner()
+      s.currentPlayer = (s.currentPlayer mod int8(s.numberPlayers)) + 1'i8
+    else:
+      echo("No go")
 
 
 ## Screen Display code
@@ -300,21 +261,18 @@ proc drawGrid() {.inline.} =
   glPopMatrix()
 
 
-proc drawMarker(marker : int8, asSelector : bool = false) {.inline.} =
-  if asSelector:
-    # first player is red and second player is blue
+proc drawMarker(marker : int8) {.inline.} =
+  var currentTexture = 0'u32
+  if marker == 1'i8:
+    currentTexture = O_texture
   else:
-    var currentTexture = 0'u32
-    if marker == 1'i8:
-      currentTexture = O_texture
-    else:
-      currentTexture = X_texture
-    renderCube(0.8, false, currentTexture)
+    currentTexture = X_texture
+  renderCube(0.8, false, currentTexture)
 
 
-proc drawXandOs(screenType : PMatchScreen) {.inline.} =
+proc drawXandOs(s : PMatchScreen) {.inline.} =
   glEnable(GL_TEXTURE_2D)
-  for i, marker in screenType.spaces:
+  for i, marker in s.spaces:
     glPushMatrix()
     glTranslatef(float(i mod 3) - 1.0, float(i div 9) - 1.0, -float((i mod 9) div 3) + 1.0 )
     if marker != 0:
@@ -323,17 +281,18 @@ proc drawXandOs(screenType : PMatchScreen) {.inline.} =
   glDisable(GL_TEXTURE_2D)
 
 
-proc drawSelector(screenType : PMatchScreen) =
+proc drawSelector(s : PMatchScreen) =
   glPushMatrix()
-  glTranslatef(float(screenType.selector mod 3) - 1.0,
-               float(screenType.selector div 9) - 1.0,
-               -float((screenType.selector mod 9) div 3) + 1.0 )
+  glTranslatef(float(s.selector mod 3) - 1.0,
+               float(s.selector div 9) - 1.0,
+               -float((s.selector mod 9) div 3) + 1.0 )
   var color : array[0..3, uint8]
-  if screenType.currentPlayer == 1'i8:
+  if s.currentPlayer == 1'i8:
     color = RED
   else:
     color = BLUE
-  if screenType.spaces[screenType.selector] != 0'i8:
+  if s.spaces[s.selector] != 0'i8:
+    #translucify
     color[3] = 0x33'u8
 
   glColor4ubv(color)
@@ -341,24 +300,13 @@ proc drawSelector(screenType : PMatchScreen) =
   glPopMatrix()
 
 
-method beforeDisplay*(screenType : PMatchScreen) =
-  if screenType.winner != 0'i8 and not screenType.ended:
-    screenType.keyMap[(glfw.KEY_ENTER, glfw.PRESS)] = winCallback
-    screenType.keyMap[(glfw.KEY_UP, glfw.PRESS)] = nullCallback
-    screenType.keyMap[(glfw.KEY_DOWN, glfw.PRESS)] = nullCallback
-    screenType.keyMap[(glfw.KEY_LEFT, glfw.PRESS)] = nullCallback
-    screenType.keyMap[(glfw.KEY_RIGHT, glfw.PRESS)] = nullCallback
-    screenType.keyMap[(glfw.KEY_SPACE, glfw.PRESS)] = nullCallback
-    screenType.ended = true
-
-
-method display*(screenType : PMatchScreen) =
+method display*(s : PMatchScreen) =
 
   # Actual world of game
   # ====================
   # World camera
-  screenType.camcorder.setPerspectiveLens()
-  screenType.camcorder.place()
+  s.camcorder.setPerspectiveLens()
+  s.camcorder.place()
 
   glScalef(2.5, 2.5, 2.5)
 
@@ -367,48 +315,36 @@ method display*(screenType : PMatchScreen) =
   drawGrid()
 
   ## DRAW THE ALREADY PLACED MARKERS
-  drawXandOs(screenType)
+  drawXandOs(s)
 
   ## DRAW SELECTOR
-  if screenType.winner == 0'i8:
-    drawSelector(screenType)
+  if s.winner == 0'i8:
+    drawSelector(s)
   else:
-    screenType.camcorder.setOrthonormalLens()
-    screenType.camcorder.place()
-
-
-  if screenType.ended:
-    var color : array[0..3, uint8]
+    # Actual world of game
+    # ====================
+    s.camcorder.place()
 
     # Interface
     # =========
-    screenType.camcorder.setOrthonormalLens()
+    s.camcorder.setOrthonormalLens()
 
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
     # Title
     glColor4ubv(RED)
-    glTranslatef(-screenType.camcorder.filmWidth/2, 3*screenType.camcorder.filmHeight/8.0, 0.0)
-    screenType.layout.setLineLength(screenType.camcorder.filmWidth)
-    glRasterPos3f(0.0, 0.0, 0.0) #-screenType.camcorder.filmWidth/2.0
-    # if screenType.winner == 0'i8:
-    #   color = RED
-    # else:
-    #   color = BLUE
-    var msg = "Player " & $screenType.winner & " won the game!"
-    screenType.layout.render(msg, TRenderMode.RenderAll)
+    glTranslatef(-s.camcorder.filmWidth/2, 3*s.camcorder.filmHeight/8.0, 0.0)
+    s.layout.setLineLength(s.camcorder.filmWidth)
+    glRasterPos3f(0.0, 0.0, 0.0)
+    var msg = "Player " & $s.winner & " won the game!"
+    s.layout.render(msg, ftgl.TRenderMode.RenderAll)
 
-    # glTranslatef(0.0, 3*screenType.camcorder.filmHeight/8.0, 0.0)
-    glTranslatef(0.0, -5*screenType.camcorder.filmHeight/8.0, 0.0) #-screenType.camcorder.filmWidth/2.0
-    glRasterPos3f(0.0, 0.0, 0.0) #-screenType.camcorder.filmWidth/2.0
+    glTranslatef(0.0, -5*s.camcorder.filmHeight/8.0, 0.0)
+    glRasterPos3f(0.0, 0.0, 0.0)
     msg = "Press Enter key to go back to the main menu"
-    screenType.layout.render(msg, TRenderMode.RenderAll)
+    s.layout.render(msg, TRenderMode.RenderAll)
 
     glColor4ubv(WHITE)
 
     glLoadIdentity()
-
-
-
-

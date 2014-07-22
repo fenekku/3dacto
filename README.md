@@ -20,8 +20,8 @@ This is a 3d tic-tac-toe game implemented in Nimrod (pretty terribly though ;)).
 
 ##Install & Play
 
-    nimrod c main.nim
-    ./main
+    nimrod c threedacto.nim
+    ./threedacto
 
 ##Gameplay
 
