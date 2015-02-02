@@ -51,9 +51,9 @@ proc render*(ptb : PTextBox, t : string, selected : bool = false ) {.inline.} =
 
   ## Box
   if selected:
-    glColor4ubv(ptb.textColor)
+    glColor4ubv(addr(ptb.textColor[0]))
   else:
-    glColor4ubv(ptb.bgColor)
+    glColor4ubv(addr(ptb.bgColor[0]))
   glBegin(GL_QUADS)
   glVertex3f(-ptb.halfWidth, ptb.halfHeight, 0.0)    # Top Left
   glVertex3f( ptb.halfWidth, ptb.halfHeight, 0.0)    # Top Right
@@ -64,7 +64,7 @@ proc render*(ptb : PTextBox, t : string, selected : bool = false ) {.inline.} =
   ## Box line
   glLineWidth(1.0)
   glBegin(GL_LINE_LOOP)
-  glColor4ubv(colors.BLACK)
+  glColor4ubv(addr(colors.BLACK[0]))
   glVertex3f(-ptb.halfWidth, ptb.halfHeight, 0.0)    # Top Left
   glVertex3f( ptb.halfWidth, ptb.halfHeight, 0.0)    # Top Right
   glVertex3f( ptb.halfWidth,-ptb.halfHeight, 0.0)    # Bottom Right
@@ -88,9 +88,9 @@ proc render*(ptb : PTextBox, t : string, selected : bool = false ) {.inline.} =
   ## Text
   # -(ptb.halfHeight - ptb.yPadding)/2
   if selected:
-    glColor4ubv(ptb.bgColor)
+    glColor4ubv(addr(ptb.bgColor[0]))
   else:
-    glColor4ubv(ptb.textColor)
+    glColor4ubv(addr(ptb.textColor[0]))
   ptb.layout.setLineLength( 2*ptb.halfWidth )
   # layout.setLineSpacing(boxHeight)
   ptb.layout.setAlignment(TTextAlignment.AlignCenter)

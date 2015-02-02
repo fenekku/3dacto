@@ -295,7 +295,7 @@ proc drawSelector(s : PMatchScreen) =
     #translucify
     color[3] = 0x33'u8
 
-  glColor4ubv(color)
+  glColor4ubv(addr(color[0]))
   renderCube(1.0, false)
   glPopMatrix()
 
@@ -311,7 +311,7 @@ method display*(s : PMatchScreen) =
   glScalef(2.5, 2.5, 2.5)
 
   ## DRAW THE SEPARATING LINES
-  glColor4ubv(WHITE)
+  glColor4ubv(addr(WHITE[0]))
   drawGrid()
 
   ## DRAW THE ALREADY PLACED MARKERS
@@ -333,7 +333,7 @@ method display*(s : PMatchScreen) =
     glLoadIdentity()
 
     # Title
-    glColor4ubv(RED)
+    glColor4ubv(addr(RED[0]))
     glTranslatef(-s.camcorder.filmWidth/2, 3*s.camcorder.filmHeight/8.0, 0.0)
     s.layout.setLineLength(s.camcorder.filmWidth)
     glRasterPos3f(0.0, 0.0, 0.0)
@@ -345,6 +345,6 @@ method display*(s : PMatchScreen) =
     msg = "Press Enter key to go back to the main menu"
     s.layout.render(msg, TRenderMode.RenderAll)
 
-    glColor4ubv(WHITE)
+    glColor4ubv(addr(WHITE[0]))
 
     glLoadIdentity()

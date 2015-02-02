@@ -1,6 +1,6 @@
 #ThreeDacto
 
-This is a 3d tic-tac-toe game implemented in Nimrod (pretty terribly though ;)).
+This is a 3d tic-tac-toe game implemented in Nim (pretty terribly though, but it will get better ;)).
 
 ![Start Screen](GameStart.png?raw=true)
 ![Gameplay](GamePlay.png?raw=true)
@@ -8,8 +8,8 @@ This is a 3d tic-tac-toe game implemented in Nimrod (pretty terribly though ;)).
 ##Requirements
 
 - Ubuntu 12.04+
-- Nimrod 0.9.4+
-- opengl babel package: `babel install opengl`
+- Nimrod 0.10.2+
+- opengl babel package: `nimble install opengl`
 - Install the Ubuntu dependencies:
     - Add the pyglfw PPA to get access to libglfw3:
 
@@ -20,7 +20,7 @@ This is a 3d tic-tac-toe game implemented in Nimrod (pretty terribly though ;)).
 
 ##Install & Play
 
-    nimrod c threedacto.nim
+    nim c threedacto.nim
     ./threedacto
 
 ##Gameplay
@@ -47,11 +47,12 @@ This is a 3d tic-tac-toe game implemented in Nimrod (pretty terribly though ;)).
 ##Design
 
 - Make a game!
-- Experiment with Nimrod
+- Experiment with Nim
 - Refactoring playground
 
 ##TODO
 
-- Try other approaches to code the same game
+- Refactor a lot of things!
 - Maybe Save/Load
 - Maybe Multiplayer
+- Maybe AI

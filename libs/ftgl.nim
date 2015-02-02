@@ -16,10 +16,10 @@ type
   PLayout* = ptr TLayout
   TLayout* {.pure.} = object
 
-  Bool32* {.size: sizeof(cint).} = enum
+  bool32* {.size: sizeof(cint).} = enum
     False32, True32
 
-converter toBool*(a: Bool32): bool = bool(a)
+converter toBool*(a: bool32): bool = bool(a)
 
 {.push callconv: cdecl, discardable.}
 proc destroy*(font: PFont) {.

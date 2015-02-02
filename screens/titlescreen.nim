@@ -83,7 +83,7 @@ method display*(s : PTitleScreen) =
   glLoadIdentity()
 
   # Title
-  glColor4ubv(colors.WHITE)
+  glColor4ubv(addr(colors.WHITE[0]))
   glTranslatef(-s.camcorder.filmWidth/2,
                3*s.camcorder.filmHeight/8.0, 0.0)
   s.layout.setLineLength(s.camcorder.filmWidth)

@@ -139,22 +139,22 @@ proc `$`*(camera : PCamera): string =
                                          $camera.up[2]]
 
 
-when isMainModule:
-  # var test : int
-  # var camcorder : PCamera
+# when isMainModule:
+#   var test : int
+#   var camcorder : PCamera
 
-  # camcorder = newCamera([0.0, 0.0, 1.0], [0.0,0.0,0.0], [0.0,1.0,0.0])
+#   camcorder = newCamera([0.0, 0.0, 1.0], [0.0,0.0,0.0], [0.0,1.0,0.0])
 
-  # var m : array[0..15, GLfloat]
-  # var f : ptr GLdouble
-  # opengl.loadExtensions()
-  # glMatrixMode(GL_MODELVIEW)
-  # glLoadIdentity()
-  # glTranslatef(1.0,
-  #              2.0,
-  #              3.0)
-  # glPushMatrix()
-  # glGetDoublev(GL_MODELVIEW_MATRIX, f)
-  # echo(repr(f))
-  # import general
-  # echo($m)
+#   var m : array[0..15, GLfloat]
+#   var f : ptr GLdouble
+#   opengl.loadExtensions()
+#   glMatrixMode(GL_MODELVIEW)
+#   glLoadIdentity()
+#   glTranslatef(1.0,
+#                2.0,
+#                3.0)
+#   glPushMatrix()
+#   glGetDoublev(GL_MODELVIEW_MATRIX, f)
+#   echo(repr(f))
+#   import general
+#   echo($m)

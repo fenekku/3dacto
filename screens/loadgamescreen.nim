@@ -75,7 +75,7 @@ method display*(s : PLoadScreen) =
   glLoadIdentity()
 
   # Title
-  glColor4ubv(colors.WHITE)
+  glColor4ubv(addr(colors.WHITE[0]))
   glTranslatef(0.0, 3*s.camcorder.filmHeight/8.0, 0.0)
 
   s.layout.setLineLength(s.camcorder.filmWidth)

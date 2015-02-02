@@ -31,7 +31,7 @@ proc renderSquare(side : float, wire : bool, texture_id : uint32 = 0'u32) =
     glTexCoord2d(0,0)
     glVertex3f( -halfSide, -halfSide, halfSide)
 
-    glColor4ubv(WHITE)
+    glColor4ubv(addr(WHITE[0]))
     glEnd()
   else:
     glBegin(GL_QUADS)
