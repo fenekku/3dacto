@@ -10,38 +10,43 @@ type
   PScreen* = ref TScreen
 
 var
-  theScreen* : PScreen
+  SCREEN* : PScreen #it's a global, deal with it
 
 
-method up*(s : PScreen) =
+# method up*(s : PScreen) =
+#   discard
+
+# method down*(s : PScreen) =
+#   discard
+
+# method enter*(s : PScreen) =
+#   discard
+
+# method left*(s : PScreen) =
+#   discard
+
+# method right*(s : PScreen) =
+#   discard
+
+# method space*(s : PScreen) =
+#   discard
+
+# method zoomIn*(s : PScreen) =
+#   discard
+
+# method zoomOut*(s : PScreen) =
+#   discard
+
+# method rotateRight*(s : PScreen) =
+#   discard
+
+# method rotateLeft*(s : PScreen) =
+#   discard
+
+method draw*(s : PScreen) =
+  ## Each screen should know how to draw itself
   discard
 
-method down*(s : PScreen) =
-  discard
-
-method enter*(s : PScreen) =
-  discard
-
-method left*(s : PScreen) =
-  discard
-
-method right*(s : PScreen) =
-  discard
-
-method space*(s : PScreen) =
-  discard
-
-method zoomIn*(s : PScreen) =
-  discard
-
-method zoomOut*(s : PScreen) =
-  discard
-
-method rotateRight*(s : PScreen) =
-  discard
-
-method rotateLeft*(s : PScreen) =
-  discard
-
-method display*(s : PScreen) =
+method process_key*(s : PScreen, key : cint, action : cint) =
+  ## Each screen should know how to handle its key presses
   discard

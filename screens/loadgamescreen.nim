@@ -19,15 +19,6 @@ type
     parent : PScreen
   PLoadScreen* = ref TLoadScreen
 
-proc key_callback(window : glfw.Window, key : cint, scancode : cint,
-                  action : cint, mods : cint) {.cdecl.} =
-  if key == glfw.KEY_UP and action == glfw.PRESS:
-    basescreen.theScreen.up()
-  if key == glfw.KEY_DOWN and action == glfw.PRESS:
-    basescreen.theScreen.down()
-  if key == glfw.KEY_ENTER and action == glfw.PRESS:
-    basescreen.theScreen.enter()
-
 
 proc newLoadScreen*(parent: PScreen): PLoadScreen =
   new(result)
@@ -41,26 +32,21 @@ proc newLoadScreen*(parent: PScreen): PLoadScreen =
   result.layout.setFont(fonts.FreeSansBold)
   result.layout.setAlignment(ftgl.TTextAlignment.AlignCenter)
   setFaceSize(fonts.FreeSansBold, 75, 72)
-  discard glfw.SetKeyCallback(parent.window, key_callback)
 
 
-method up(s : PLoadScreen) =
-  s.loadMenu.up()
+method process_key(s : PLoadScreen, key : cint, action : cint) =
+  if key == glfw.KEY_UP and action == glfw.PRESS:
+    s.loadMenu.up()
+  if key == glfw.KEY_DOWN and action == glfw.PRESS:
+    s.loadMenu.down()
+  if key == glfw.KEY_ENTER and action == glfw.PRESS:
+    case s.loadMenu.selectedIdx
+    of 3:
+      SCREEN = s.parent
+    else:
+      echo "Not implemented yet"
 
-
-method down(s : PLoadScreen) =
-  s.loadMenu.down()
-
-
-method enter*(s : PLoadScreen) =
-  case s.loadMenu.selectedIdx
-  of 3:
-    basescreen.theScreen = s.parent
-  else:
-    echo "Not implemented yet"
-
-
-method display*(s : PLoadScreen) =
+method draw*(s : PLoadScreen) =
   ## Display the Load Screen
 
   # Actual world of game

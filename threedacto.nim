@@ -4,8 +4,6 @@ import tables
 import unsigned #uint comparison
 
 import opengl   #all opengl stuff
-import ftgl
-import soil
 
 import glfw3 as glfw
 import camera
@@ -15,23 +13,12 @@ import titlescreen
 import abacus
 
 var
-  running : bool = true
   frameCount : int = 0
   lastTime : float = 0.0
   lastFPSTime : float = 0.0
   currentTime : float = 0.0
   frameRate : int = 0
   frameDelta : float = 0.0
-  x : float = 0.0
-  y : float = 0.0
-  vx : float = 200.0
-  vy : float = 200.0
-
-  w : ptr cint
-  h : ptr cint
-  c : ptr cint
-  image : pointer
-
   windowW : cint = 1024
   windowH : cint = 768
   window : glfw.Window
@@ -58,6 +45,10 @@ proc size_callback(window: glfw.Window, width: cint, height: cint) {.cdecl.} =
   camcorder.setFilmWidth(float(windowW))
   camcorder.setFilmHeight(float(windowH))
 
+
+proc key_callback(window : glfw.Window, key : cint, scancode : cint,
+                  action : cint, mods : cint) {.cdecl.} =
+  SCREEN.process_key(key, action)
 
 ## -------------------------------------------------------------------------------
 
@@ -86,7 +77,7 @@ proc initialize() =
 
   camcorder = camera.newCamera(float(windowW), float(windowH), 60.0,
                                pos = vec3(0.0, 4.0, 8.0))
-  basescreen.theScreen = titlescreen.newTitleScreen(window, camcorder)
+  SCREEN = titlescreen.newTitleScreen(window, camcorder)
 
   glClearColor(0.0, 0.0, 0.0, 0.0)
   glClearDepth(1.0)                   # Enables Clearing Of The Depth Buffer
@@ -107,13 +98,13 @@ proc initialize() =
 
   ## Callbacks
   discard glfw.SetWindowSizeCallback(window, size_callback)
-  # discard glfw.SetKeyCallback(window, key_callback)
+  discard glfw.SetKeyCallback(window, key_callback)
 
   lastTime = glfw.GetTime()
   lastFPSTime = lastTime
 
 
-proc update() =
+proc monitor_frame_rate() =
 
   currentTime = glfw.GetTime()
 
@@ -123,7 +114,7 @@ proc update() =
 
   if currentTime - lastFPSTime > 1.0:
     frameRate = int(float(frameCount) / (currentTime - lastFPSTime))
-    glfw.SetWindowTitle(window, "3Dactoe - FPS = $1" % intToStr(frameRate))
+    glfw.SetWindowTitle(window, "threeDactoe - FPS = $1" % intToStr(frameRate))
 
     lastFPSTime = currentTime
     frameCount = 0
@@ -137,11 +128,11 @@ when isMainModule:
 
   while glfw.WindowShouldClose(window) == 0:
 
-    update()
+    monitor_frame_rate()
 
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
-    basescreen.theScreen.display()
+    SCREEN.draw()
 
     glfw.SwapBuffers(window)
 

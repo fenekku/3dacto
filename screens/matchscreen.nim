@@ -37,30 +37,6 @@ var
   X_texture : uint32
 
 
-proc key_callback(window : glfw.Window, key : cint, scancode : cint,
-                  action : cint, mods : cint) {.cdecl.} =
-  if key == glfw.KEY_UP and action == glfw.PRESS:
-    basescreen.theScreen.up()
-  if key == glfw.KEY_DOWN and action == glfw.PRESS:
-    basescreen.theScreen.down()
-  if key == glfw.KEY_LEFT and action == glfw.PRESS:
-    basescreen.theScreen.left()
-  if key == glfw.KEY_RIGHT and action == glfw.PRESS:
-    basescreen.theScreen.right()
-  if key == glfw.KEY_ENTER and action == glfw.PRESS:
-    basescreen.theScreen.enter()
-  if key == glfw.KEY_SPACE and action == glfw.PRESS:
-    basescreen.theScreen.space()
-  if key == glfw.KEY_W and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
-    basescreen.theScreen.zoomIn()
-  if key == glfw.KEY_S and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
-    basescreen.theScreen.zoomOut()
-  if key == glfw.KEY_A and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
-    basescreen.theScreen.rotateLeft()
-  if key == glfw.KEY_D and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
-    basescreen.theScreen.rotateRight()
-
-
 proc newMatchScreen*(parent: PScreen): PMatchScreen =
   new(result)
   result.window = parent.window
@@ -86,49 +62,6 @@ proc newMatchScreen*(parent: PScreen): PMatchScreen =
   ## check for an error during the load process
   if( (0'u32 == O_texture) or (0'u32 == X_texture) ):
     echo( "SOIL loading error: " & $SOIL_last_result() )
-
-  discard glfw.SetKeyCallback(parent.window, key_callback)
-
-
-method up(s : PMatchScreen) =
-  if s.selector mod 9 in 6..8:
-    s.selector -= 6
-  else:
-    s.selector += 3
-
-method down(s : PMatchScreen) =
-  if s.selector mod 9 in 0..2:
-    s.selector += 6
-  else:
-    s.selector -=3
-
-method right(s : PMatchScreen) =
-  if s.selector mod 3 == 2:
-    s.selector -= 2
-  else:
-    s.selector += 1
-
-method left(s : PMatchScreen) =
-  if s.selector mod 3 == 0:
-    s.selector += 2
-  else:
-    s.selector -= 1
-
-method space(s : PMatchScreen) =
-  s.selector += 9
-  s.selector = s.selector mod 27
-
-method zoomIn(s: PMatchScreen) =
-  s.camcorder.zoomIn(0.5)
-
-method zoomOut(s: PMatchScreen)  =
-  s.camcorder.zoomOut(0.5)
-
-method rotateLeft(s: PMatchScreen) =
-  s.camcorder.rotateAround(1.0)
-
-method rotateRight(s: PMatchScreen) =
-  s.camcorder.rotateAround(-1.0)
 
 
 proc checkTriplet(a : int8, b : int8, c : int8) =
@@ -197,16 +130,57 @@ proc getWinner(s : PMatchScreen) =
     s.winner = int8(parseInt(msg))
 
 
-method enter*(s : PMatchScreen) =
-  if s.winner != 0'i8:
-    basescreen.theScreen = s.parent
-  else:
-    if s.spaces[s.selector] == 0:
-      s.spaces[s.selector] = s.currentPlayer
-      s.getWinner()
-      s.currentPlayer = (s.currentPlayer mod int8(s.numberPlayers)) + 1'i8
+method process_key(s : PMatchScreen, key : cint, action : cint) =
+  if key == glfw.KEY_UP and action == glfw.PRESS:
+    if s.selector mod 9 in 6..8:
+      s.selector -= 6
     else:
-      echo("No go")
+      s.selector += 3
+
+  if key == glfw.KEY_DOWN and action == glfw.PRESS:
+    if s.selector mod 9 in 0..2:
+      s.selector += 6
+    else:
+      s.selector -=3
+
+  if key == glfw.KEY_LEFT and action == glfw.PRESS:
+    if s.selector mod 3 == 0:
+        s.selector += 2
+    else:
+      s.selector -= 1
+
+  if key == glfw.KEY_RIGHT and action == glfw.PRESS:
+    if s.selector mod 3 == 2:
+      s.selector -= 2
+    else:
+      s.selector += 1
+
+  if key == glfw.KEY_ENTER and action == glfw.PRESS:
+    if s.winner != 0'i8:
+      SCREEN = s.parent
+    else:
+      if s.spaces[s.selector] == 0:
+        s.spaces[s.selector] = s.currentPlayer
+        s.getWinner()
+        s.currentPlayer = (s.currentPlayer mod int8(s.numberPlayers)) + 1'i8
+      else:
+        echo("No go")
+
+  if key == glfw.KEY_SPACE and action == glfw.PRESS:
+    s.selector += 9
+    s.selector = s.selector mod 27
+
+  if key == glfw.KEY_W and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
+    s.camcorder.zoomIn(0.5)
+
+  if key == glfw.KEY_S and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
+    s.camcorder.zoomOut(0.5)
+
+  if key == glfw.KEY_A and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
+    s.camcorder.rotateAround(1.0)
+
+  if key == glfw.KEY_D and ((action == glfw.PRESS) or (action == glfw.REPEAT)):
+    s.camcorder.rotateAround(-1.0)
 
 
 ## Screen Display code
@@ -300,7 +274,7 @@ proc drawSelector(s : PMatchScreen) =
   glPopMatrix()
 
 
-method display*(s : PMatchScreen) =
+method draw*(s : PMatchScreen) =
 
   # Actual world of game
   # ====================
@@ -321,6 +295,7 @@ method display*(s : PMatchScreen) =
   if s.winner == 0'i8:
     drawSelector(s)
   else:
+    # DRAW WINNING
     # Actual world of game
     # ====================
     s.camcorder.place()
